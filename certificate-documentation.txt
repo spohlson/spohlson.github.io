@@ -1,0 +1,99 @@
+CREATE CUSTOM Certificate Authority and Self-Signed Certificate:
+
+openssl genrsa -out myCA.key 2048
+
+openssl req -x509 -sha256 -new -key myCA.key -out myCA.cer -days 730 -subj /CN="My Custom CA"
+
+openssl genrsa -out mycert1.key 2048
+
+openssl req -new -out mycert1.req -key mycert1.key -subj /CN=localhost
+
+openssl x509 -req -sha256 -in mycert1.req -out mycert1.cer -CAkey myCA.key -CA myCA.cer -days 365 -CAcreateserial -CAserial serial
+
+openssl pkcs12 -export -out keystore.p12 -inkey mycert1.key -in mycert1.cer -certfile myCA.cer
+
+> Enter Export Password: <storepass>
+
+-------------------------------------------------------------
+
+VIEW THE CERT:
+
+keytool -list -keystore keystore.p12 -storepass <storepass> -storetype PKCS12 -v
+
+Keystore type: PKCS12
+Keystore provider: SunJSSE
+
+Your keystore contains 1 entry
+
+Alias name: 1
+Creation date: Apr 8, 2016
+Entry type: PrivateKeyEntry
+Certificate chain length: 2
+Certificate[1]:
+Owner: CN=localhost
+Issuer: CN=My Custom CA
+Serial number: 8d23cc8d3e8e87dd
+Valid from: Fri Apr 08 14:42:40 PDT 2016 until: Sat Apr 08 14:42:40 PDT 2017
+Certificate fingerprints:
+	 MD5:  43:2A:51:6F:5F:D8:49:F0:07:B7:25:BB:DD:D0:10:42
+	 SHA1: E9:6C:6F:C4:04:15:9F:2F:7E:76:1E:64:18:C6:7C:4E:B1:4B:29:2C
+	 SHA256: E4:62:4B:8F:B8:4B:98:B1:32:51:FD:E8:5E:3C:13:DB:D1:7C:1C:90:2A:68:7A:94:02:C8:E5:A5:1F:21:E3:2D
+	 Signature algorithm name: SHA256withRSA
+	 Version: 1
+Certificate[2]:
+Owner: CN=My Custom CA
+Issuer: CN=My Custom CA
+Serial number: c54b1136b9d8f6aa
+Valid from: Fri Apr 08 14:41:13 PDT 2016 until: Sun Apr 08 14:41:13 PDT 2018
+Certificate fingerprints:
+	 MD5:  8C:95:E0:17:C0:A8:66:40:4A:E1:27:EB:BE:02:29:C1
+	 SHA1: ED:52:F0:BC:27:56:4C:92:FE:E4:9A:56:EE:D3:9F:F4:63:F3:60:05
+	 SHA256: 7E:9E:E5:83:A6:E9:88:91:AD:58:84:99:0B:23:02:46:4E:58:BD:E1:A2:6A:CB:5A:C8:F4:EA:CA:19:5C:79:E2
+	 Signature algorithm name: SHA256withRSA
+	 Version: 3
+
+Extensions: 
+
+#1: ObjectId: 2.5.29.35 Criticality=false
+AuthorityKeyIdentifier [
+KeyIdentifier [
+0000: 52 84 DA 1E 20 F0 79 FA   68 16 C7 EE 29 F5 31 F2  R... .y.h...).1.
+0010: 90 F7 2C 46                                        ..,F
+]
+[CN=My Custom CA]
+SerialNumber: [    c54b1136 b9d8f6aa]
+]
+
+#2: ObjectId: 2.5.29.19 Criticality=false
+BasicConstraints:[
+  CA:true
+  PathLen:2147483647
+]
+
+#3: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 52 84 DA 1E 20 F0 79 FA   68 16 C7 EE 29 F5 31 F2  R... .y.h...).1.
+0010: 90 F7 2C 46                                        ..,F
+]
+]
+*******************************************
+*******************************************
+
+-------------------------------------------------------------
+
+CHANGE ALIAS:
+
+keytool -changealias -alias 1 -destalias spring_tomcat -keystore keystore.p12 -storepass <storepass> -storetype PKCS12
+
+-------------------------------------------------------------
+
+Downloading the certificate:
+1. Go to http://spohlson.github.io/keystore.p12
+2. Move it to $HOME/ss-config
+3. Ensure server.ssl.keyAlias is set to spring_tomcat in $HOME/ss-config/shopstyle-spring.properties
+
+iOS Simulator:
+1. Open Safari
+2. Go to http://spohlson.github.io/myCA.cer
+3. Click “Install”
